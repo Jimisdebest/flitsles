@@ -1,1 +1,888 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Flitsmeester - Lumo het konijn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
 
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Poppins', sans-serif;
+            background: radial-gradient(circle at 30% 20%, #0f2c38, #031016);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-wrapper {
+            width: 100%;
+            height: 100%;
+            background: rgba(248, 250, 245, 0.96);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+            position: relative;
+        }
+
+        /* Annuleren kruisje linksboven */
+        .cancel-btn {
+            position: fixed;
+            top: 20px;
+            left: 24px;
+            width: 40px;
+            height: 40px;
+            background: rgba(100, 100, 120, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 200;
+            transition: 0.2s;
+            font-size: 26px;
+            font-weight: 300;
+            color: #5a6e7a;
+            backdrop-filter: blur(4px);
+        }
+        .cancel-btn:hover {
+            background: rgba(180, 60, 50, 0.6);
+            color: white;
+        }
+
+        .stats-top {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            background: rgba(30, 45, 55, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 10px 24px;
+            display: flex;
+            gap: 24px;
+            z-index: 100;
+            font-weight: 600;
+            color: #f0f3f8;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,215,130,0.4);
+        }
+        .stats-top span {
+            color: #ffd97e;
+            margin-left: 6px;
+            font-weight: 800;
+        }
+
+        .content {
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98);}
+            to { opacity: 1; transform: scale(1);}
+        }
+
+        .word-stage {
+            perspective: 800px;
+            margin: 1rem 0 1.5rem;
+            overflow: hidden;
+            min-height: 260px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .woord-anim {
+            background: #fff8e7;
+            border-radius: 80px;
+            padding: 1.8rem 1rem;
+            font-size: 6rem;
+            font-weight: 800;
+            font-family: 'Fira Mono', 'Courier New', monospace;
+            letter-spacing: 8px;
+            color: #1a4d6b;
+            box-shadow: 0 30px 40px -12px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,245,180,0.8);
+            border: 3px solid #ffcd7e;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.22s ease;
+            will-change: transform, opacity;
+        }
+
+        .slide-left-out {
+            transform: translateX(-120%) rotateY(15deg);
+            opacity: 0;
+        }
+        .slide-right-in {
+            transform: translateX(0%) rotateY(0deg);
+            opacity: 1;
+            animation: slideInFromRight 0.32s ease-out;
+        }
+        @keyframes slideInFromRight {
+            0% { transform: translateX(80%) rotateY(-10deg); opacity: 0; }
+            100% { transform: translateX(0) rotateY(0); opacity: 1; }
+        }
+
+        .type-area {
+            margin: 20px 0 25px;
+            width: 100%;
+        }
+        input {
+            width: 90%;
+            max-width: 600px;
+            padding: 20px 32px;
+            font-size: 1.8rem;
+            border-radius: 70px;
+            border: 2px solid #cfdfed;
+            background: white;
+            font-weight: 500;
+            text-align: center;
+            letter-spacing: 1px;
+            outline: none;
+            transition: 0.2s;
+            font-family: monospace;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+        }
+        input:focus {
+            border-color: #f3a712;
+            box-shadow: 0 0 0 4px rgba(243,167,18,0.25);
+            transform: scale(1.01);
+        }
+
+        button {
+            background: #1f6e8c;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.4rem;
+            padding: 16px 36px;
+            border-radius: 56px;
+            cursor: pointer;
+            transition: 0.12s linear;
+            margin: 10px;
+            box-shadow: 0 5px 0 #0a4057;
+            font-family: inherit;
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #0a4057;
+        }
+        .start-btn, .doel-btn {
+            background: #2b7a4b;
+            font-size: 1.7rem;
+            padding: 16px 40px;
+            box-shadow: 0 8px 0 #1a4f32;
+        }
+        .doel-btn {
+            background: #1f6e8c;
+            font-size: 1.3rem;
+            margin: 8px;
+            box-shadow: 0 5px 0 #0a4057;
+        }
+
+        .doelen-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            margin: 35px 0;
+        }
+
+        .les-hint {
+            background: #eef2fa90;
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 10px 24px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1f5e7e;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .feedback-flash {
+            position: fixed;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e2f3c;
+            color: #f9e0a0;
+            padding: 14px 32px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            z-index: 200;
+            box-shadow: 0 8px 20px black;
+            pointer-events: none;
+            white-space: nowrap;
+            backdrop-filter: blur(12px);
+            font-family: monospace;
+        }
+
+        .compliment-card {
+            background: #e0f2e9;
+            border-radius: 64px;
+            padding: 35px 20px;
+            margin: 30px 0;
+            font-weight: bold;
+            font-size: 1.5rem;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+        }
+
+        .boost-message {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            background: #facc15;
+            color: #1f2a3a;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 300;
+            box-shadow: 0 6px 16px black;
+            pointer-events: none;
+            border-left: 6px solid #ff8c00;
+        }
+
+        .doel-info {
+            background: #eef2fa;
+            border-radius: 56px;
+            padding: 14px 28px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #1f5e7e;
+            font-size: 1.1rem;
+        }
+
+        /* Lumo mascotte - normaal rechtsonder */
+        .lumo-mascotte {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 100px;
+            height: 100px;
+            z-index: 150;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .lumo-mascotte img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+        
+        /* Lumo waarschuwingsmodal - groot in het midden */
+        .lumo-warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .lumo-warning-card {
+            background: white;
+            border-radius: 60px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+            border: 3px solid #ffcd7e;
+        }
+        .lumo-warning-card img {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        .lumo-warning-card p {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f5e7e;
+            margin: 20px 0;
+        }
+        .warning-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .warning-buttons button {
+            font-size: 1.2rem;
+            padding: 12px 28px;
+        }
+        .btn-stoppen {
+            background: #c4450c;
+            box-shadow: 0 5px 0 #7a2a00;
+        }
+        .btn-doorgaan {
+            background: #2b7a4b;
+            box-shadow: 0 5px 0 #1a4f32;
+        }
+        
+        /* Volledige scherm spring animatie */
+        @keyframes lumoFullScreenJump {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            15% { transform: translate(calc(50vw - 50px), -40vh) scale(1.3); opacity: 1; }
+            40% { transform: translate(calc(70vw - 80px), -60vh) scale(1.5); opacity: 1; }
+            65% { transform: translate(calc(30vw - 30px), -50vh) scale(1.4); opacity: 1; }
+            85% { transform: translate(calc(10vw - 20px), -20vh) scale(1.1); opacity: 1; }
+            100% { transform: translate(0, 0) scale(1); opacity: 1; }
+        }
+        
+        .lumo-flying {
+            position: fixed;
+            z-index: 1000;
+            width: 120px;
+            height: 120px;
+            pointer-events: none;
+            animation: lumoFullScreenJump 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        .lumo-flying img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.3));
+        }
+
+        .lumo-speech {
+            position: fixed;
+            bottom: 140px;
+            right: 120px;
+            background: white;
+            border-radius: 40px;
+            padding: 14px 24px;
+            font-weight: bold;
+            color: #1f5e7e;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 160;
+            white-space: nowrap;
+            border: 2px solid #ffcd7e;
+            pointer-events: none;
+            animation: fadeInOut 2.8s ease forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(15px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); visibility: hidden; }
+        }
+
+        @media (max-width: 700px) {
+            .woord-anim { font-size: 3.5rem; padding: 1.2rem; letter-spacing: 3px; }
+            input { font-size: 1.4rem; padding: 15px 20px; width: 95%; }
+            button { font-size: 1.1rem; padding: 12px 24px; }
+            .feedback-flash { font-size: 1.1rem; padding: 10px 24px; bottom: 15%;}
+            .start-btn { font-size: 1.4rem; padding: 14px 30px; }
+            .stats-top { font-size: 0.8rem; padding: 6px 16px; gap: 12px; top: 12px; right: 12px; }
+            .doel-btn { font-size: 1rem; padding: 10px 20px; }
+            .lumo-mascotte { width: 75px; height: 75px; bottom: 15px; right: 15px; }
+            .lumo-flying { width: 90px; height: 90px; }
+            .lumo-speech { bottom: 110px; right: 90px; font-size: 0.8rem; white-space: nowrap; }
+            .lumo-warning-card p { font-size: 1.2rem; }
+            .lumo-warning-card img { width: 100px; height: 100px; }
+        }
+    </style>
+</head>
+<body>
+<div id="appRoot" class="app-wrapper"></div>
+
+<script>
+    // --------------------------- SPELLINGSDOELEN ---------------------------
+    let spellingsDoelen = [];
+    let geselecteerdDoelIndex = -1;
+    let woordenLijst = [];
+
+    async function laadSpellingsDoelen() {
+        try {
+            const response = await fetch('spellingsdoelen.txt?t=' + Date.now());
+            if (response.ok) {
+                const text = await response.text();
+                const lines = text.split(/\r?\n/);
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed === "" || trimmed.startsWith("#")) continue;
+                    const eqIndex = trimmed.indexOf('=');
+                    if (eqIndex !== -1) {
+                        const naam = trimmed.substring(0, eqIndex).trim();
+                        let bestand = trimmed.substring(eqIndex + 1).trim();
+                        spellingsDoelen.push({ naam: naam, bestand: bestand, woorden: [] });
+                    }
+                }
+                for (let i = 0; i < spellingsDoelen.length; i++) {
+                    await laadWoordenVoorDoel(i);
+                }
+            } else {
+                spellingsDoelen = [{ naam: "Standaard woorden", bestand: "", woorden: ["appel","fiets","huis","bloem","vogel","school","lamp","raam","kat","hond","boom","vuur","lucht","aarde","ster","maan","zon"] }];
+                woordenLijst = spellingsDoelen[0].woorden;
+                geselecteerdDoelIndex = 0;
+            }
+        } catch (err) {
+            spellingsDoelen = [{ naam: "Standaard woorden", bestand: "", woorden: ["appel","fiets","huis","bloem","vogel"] }];
+            woordenLijst = spellingsDoelen[0].woorden;
+            geselecteerdDoelIndex = 0;
+        }
+    }
+
+    async function laadWoordenVoorDoel(index) {
+        const doel = spellingsDoelen[index];
+        if (!doel.bestand) {
+            doel.woorden = ["voorbeeld", "woord", "flits", "meester", "lumo", "konijn", "springen"];
+            return;
+        }
+        try {
+            const response = await fetch(doel.bestand + '?t=' + Date.now());
+            if (response.ok) {
+                const text = await response.text();
+                const lines = text.split(/\r?\n/).filter(w => w.trim().length > 0);
+                doel.woorden = lines.length ? lines.map(w => w.trim().toLowerCase()) : ["geen", "woorden"];
+            } else {
+                doel.woorden = ["fout", "laden"];
+            }
+        } catch (err) {
+            doel.woorden = ["error"];
+        }
+    }
+
+    // ---------- STATE ----------
+    let state = {
+        actief: false,
+        opgavenTotaal: 20,
+        huidigeIndex: 0,
+        woordenLijstLes: [],
+        huidigWoord: "",
+        fase: "start",
+        startTijd: null,
+        foutenGemaakt: 0,
+        boostEindTijd: 0,
+        lessenVandaag: 0,
+        totaalPunten: 0,
+        nettoPunten: 0,
+        complimentTekst: "",
+        inputValue: "",
+        feedbackTimer: null,
+        keyHandlerGlobal: null,
+        clickFlitsHandler: null,
+        laatsteComplimentWoordCount: 0,
+        waarschuwingGetoond: false,  // of de 10-minuten waarschuwing al is getoond
+        warningInterval: null
+    };
+
+    const tussentijdseComplimenten = ["kanjer", "topper", "superster", "kampioen", "fenomeen", "legende", "held", "virtuoos", "meesterflitser", "woordkunstenaar", "kampioen", "geweldig"];
+    const randomCompliment = () => tussentijdseComplimenten[Math.floor(Math.random() * tussentijdseComplimenten.length)];
+
+    // Lumo functie - springt door het hele scherm
+    function toonLumoFullScreenSpring(woordAantal, complimentNaam) {
+        const oldSpeech = document.querySelector('.lumo-speech');
+        if(oldSpeech) oldSpeech.remove();
+        const oldFlying = document.querySelector('.lumo-flying');
+        if(oldFlying) oldFlying.remove();
+        
+        const flyingLumo = document.createElement('div');
+        flyingLumo.className = 'lumo-flying';
+        flyingLumo.innerHTML = `<img src="Lumospringend.png" alt="Lumo springt" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23f5e6d3%22/%3E%3Ccircle cx=%2235%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3Ccircle cx=%2265%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3Cpath d=%22M40 65 Q50 75 60 65%22 stroke=%22%23333%22 stroke-width=%223%22 fill=%22none%22/%3E%3C/svg%3E'">`;
+        document.body.appendChild(flyingLumo);
+        
+        const speech = document.createElement('div');
+        speech.className = 'lumo-speech';
+        speech.textContent = `${woordAantal} woorden gedaan! ${complimentNaam}!`;
+        document.body.appendChild(speech);
+        
+        setTimeout(() => {
+            if(flyingLumo) flyingLumo.remove();
+            if(speech) speech.remove();
+        }, 1300);
+    }
+
+    // Lumo waarschuwing na 10 minuten
+    function toonLumoWaarschuwing() {
+        if (!state.actief) return;
+        if (state.waarschuwingGetoond) return;
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'lumo-warning-overlay';
+        overlay.innerHTML = `
+            <div class="lumo-warning-card">
+                <img src="Lumo.png" alt="Lumo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23f5e6d3%22/%3E%3Ccircle cx=%2235%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3Ccircle cx=%2265%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3C/svg%3E'">
+                <p>⏰ Deze les duurt al lang.<br>Wil je stoppen of ga je door?</p>
+                <div class="warning-buttons">
+                    <button class="btn-stoppen" id="lumoStopBtn">Stoppen</button>
+                    <button class="btn-doorgaan" id="lumoDoorgaanBtn">Doorgaan</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        state.waarschuwingGetoond = true;
+        
+        const stopBtn = document.getElementById('lumoStopBtn');
+        const doorgaanBtn = document.getElementById('lumoDoorgaanBtn');
+        
+        stopBtn.onclick = () => {
+            overlay.remove();
+            annuleerLes();
+        };
+        doorgaanBtn.onclick = () => {
+            overlay.remove();
+            // Lumo gaat weer normaal (geen extra actie nodig)
+            toonKortFeedback("Ga zo door!", "#2b7a4b");
+        };
+    }
+
+    function checkLesDuur() {
+        if (!state.actief || !state.startTijd) return;
+        const verstrekenMs = Date.now() - state.startTijd;
+        if (verstrekenMs >= 10 * 60 * 1000 && !state.waarschuwingGetoond) {
+            toonLumoWaarschuwing();
+        }
+    }
+
+    function checkTussentijdsCompliment() {
+        const voltooid = state.huidigeIndex;
+        if (voltooid > 0 && voltooid % 5 === 0 && voltooid !== state.laatsteComplimentWoordCount) {
+            state.laatsteComplimentWoordCount = voltooid;
+            const complimentNaam = randomCompliment();
+            toonLumoFullScreenSpring(voltooid, complimentNaam);
+        }
+    }
+
+    // ----- Punten & dagteller -----
+    function laadTotaalPunten() {
+        const saved = localStorage.getItem('flitsTotaalPunten');
+        state.totaalPunten = saved ? parseInt(saved) : 0;
+    }
+    function bewaarTotaalPunten() { localStorage.setItem('flitsTotaalPunten', state.totaalPunten); }
+    function voegPuntenToe(punten) { state.totaalPunten += punten; bewaarTotaalPunten(); }
+
+    function getTodayStr() { return new Date().toLocaleDateString('en-CA'); }
+    function laadDagTeller() {
+        const datum = getTodayStr();
+        const stored = localStorage.getItem('flitsLessenPerDag');
+        if (stored) {
+            try {
+                const obj = JSON.parse(stored);
+                state.lessenVandaag = obj.datum === datum ? obj.aantal : 0;
+            } catch(e) { state.lessenVandaag = 0; }
+        } else state.lessenVandaag = 0;
+    }
+    function bewaarDagTeller() { localStorage.setItem('flitsLessenPerDag', JSON.stringify({ datum: getTodayStr(), aantal: state.lessenVandaag })); }
+    function verhoogLesTeller() { state.lessenVandaag++; bewaarDagTeller(); }
+
+    // Boost
+    function isBoostActief() { return Date.now() < state.boostEindTijd; }
+    function berekenPuntenVoorLes() { let basis = 10; if(isBoostActief()) basis *= 2; return basis; }
+    function toonMeldingRechts(tekst, bg = "#facc15", tijd = 3500) {
+        let div = document.querySelector('.boost-message');
+        if (!div) { div = document.createElement('div'); div.className = 'boost-message'; document.body.appendChild(div); }
+        div.textContent = tekst; div.style.background = bg; div.style.opacity = '1';
+        setTimeout(() => { if(div) div.style.opacity = '0'; }, tijd);
+    }
+    function startBoost(minuten = 10) {
+        const nieuweEind = Date.now() + minuten * 60 * 1000;
+        state.boostEindTijd = nieuweEind;
+        localStorage.setItem('flitsBoostEind', nieuweEind);
+        toonMeldingRechts("Puntenboost actief (dubbele punten - 10 minuten)", "#facc15", 4000);
+        if (window.boostTimeout) clearTimeout(window.boostTimeout);
+        window.boostTimeout = setTimeout(() => {
+            if (Date.now() >= state.boostEindTijd) {
+                toonMeldingRechts("De puntenboost is verlopen", "#cbd5e1", 3500);
+                state.boostEindTijd = 0;
+                localStorage.removeItem('flitsBoostEind');
+                if (!state.actief) renderStartScherm();
+            }
+        }, minuten * 60 * 1000);
+    }
+    function hervatBoost() {
+        const saved = localStorage.getItem('flitsBoostEind');
+        if (saved) {
+            const eind = parseInt(saved);
+            if (eind > Date.now()) {
+                state.boostEindTijd = eind;
+                const rest = eind - Date.now();
+                if (rest > 0) {
+                    if(window.boostTimeout) clearTimeout(window.boostTimeout);
+                    window.boostTimeout = setTimeout(() => {
+                        toonMeldingRechts("De puntenboost is verlopen", "#cbd5e1");
+                        state.boostEindTijd = 0;
+                        localStorage.removeItem('flitsBoostEind');
+                        if (!state.actief) renderStartScherm();
+                    }, rest);
+                }
+            } else localStorage.removeItem('flitsBoostEind');
+        }
+    }
+
+    function randomWoordUitLijst() { 
+        if (!woordenLijst || woordenLijst.length === 0) return "woord";
+        return woordenLijst[Math.floor(Math.random() * woordenLijst.length)]; 
+    }
+    function genereerLesWoorden() { return Array.from({ length: 20 }, () => randomWoordUitLijst()); }
+
+    function wisselWoordMetAnimatie(nieuwWoord, callback) {
+        const woordElement = document.getElementById('woordAnimElement');
+        if (!woordElement) { if(callback) callback(); return; }
+        woordElement.classList.add('slide-left-out');
+        setTimeout(() => {
+            if (woordElement) woordElement.innerText = nieuwWoord;
+            woordElement.classList.remove('slide-left-out');
+            woordElement.classList.add('slide-right-in');
+            setTimeout(() => {
+                if(woordElement) woordElement.classList.remove('slide-right-in');
+                if(callback) callback();
+            }, 300);
+        }, 200);
+    }
+
+    function cleanupFlitsListeners() {
+        if (state.keyHandlerGlobal) document.removeEventListener('keydown', state.keyHandlerGlobal);
+        if (state.clickFlitsHandler) {
+            const woordDiv = document.getElementById('woordAnimElement');
+            if(woordDiv) woordDiv.removeEventListener('click', state.clickFlitsHandler);
+        }
+        state.keyHandlerGlobal = null;
+        state.clickFlitsHandler = null;
+    }
+
+    function toonKortFeedback(bericht, kleur="#1f6e8c") {
+        let fb = document.querySelector('.feedback-flash');
+        if(!fb) { fb = document.createElement('div'); fb.className = 'feedback-flash'; document.body.appendChild(fb); }
+        fb.textContent = bericht; fb.style.backgroundColor = kleur; fb.style.opacity = '1';
+        setTimeout(() => { if(fb) fb.style.opacity = '0'; }, 1000);
+    }
+
+    function annuleerLes() {
+        if (!state.actief) return;
+        state.actief = false;
+        if (state.warningInterval) clearInterval(state.warningInterval);
+        cleanupFlitsListeners();
+        if(state.feedbackTimer) clearTimeout(state.feedbackTimer);
+        renderStartScherm();
+        toonKortFeedback("Les geannuleerd", "#8a6e4b");
+    }
+
+    function selecteerDoel(index) {
+        if (state.actief) return;
+        geselecteerdDoelIndex = index;
+        woordenLijst = spellingsDoelen[index].woorden;
+        renderStartScherm();
+    }
+
+    function startNieuweLes() {
+        if (state.actief) return;
+        if (!woordenLijst || woordenLijst.length === 0) {
+            toonKortFeedback("Geen woorden beschikbaar", "#c4450c");
+            return;
+        }
+        const woordenReeks = genereerLesWoorden();
+        state.actief = true;
+        state.huidigeIndex = 0;
+        state.woordenLijstLes = woordenReeks;
+        state.huidigWoord = woordenReeks[0];
+        state.fase = "wachtOpToets";
+        state.foutenGemaakt = 0;
+        state.startTijd = Date.now();
+        state.inputValue = "";
+        state.laatsteComplimentWoordCount = 0;
+        state.waarschuwingGetoond = false;
+        if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
+        cleanupFlitsListeners();
+        
+        if (state.warningInterval) clearInterval(state.warningInterval);
+        state.warningInterval = setInterval(() => {
+            checkLesDuur();
+        }, 10000);
+        
+        render();
+    }
+
+    function gaNaarVolgendeOpgave() {
+        const volgendeIdx = state.huidigeIndex + 1;
+        if (volgendeIdx < 20) {
+            const nieuwWoord = state.woordenLijstLes[volgendeIdx];
+            state.huidigWoord = nieuwWoord;
+            state.huidigeIndex = volgendeIdx;
+            state.fase = "wachtOpToets";
+            render();
+            checkTussentijdsCompliment();
+        } else {
+            if (state.warningInterval) clearInterval(state.warningInterval);
+            verhoogLesTeller();
+            const duurMs = Date.now() - state.startTijd;
+            const duurSec = duurMs / 1000;
+            let snelCompl = "";
+            if (duurSec < 120) snelCompl = "Snelle les! Je hebt deze les binnen 2 minuten gemaakt!";
+            else if (duurSec > 480) snelCompl = "Doorzetter! De les duurde wat lang, maar je hebt het gehaald!";
+            let foutloosTxt = (state.foutenGemaakt === 0) ? (Math.random() < 0.5 ? "Foutloze les!" : "Koos Foutloos!") : "";
+            let combo = [snelCompl, foutloosTxt].filter(c=>c).join(" • ");
+            state.complimentTekst = combo || "Geweldig! Les voltooid!";
+            state.nettoPunten = berekenPuntenVoorLes();
+            voegPuntenToe(state.nettoPunten);
+            state.fase = "lesAfgelopen";
+            render();
+        }
+    }
+
+    function beoordeelAntwoord(antwoord) {
+        if (state.fase !== "typeModus") return;
+        const correct = state.huidigWoord;
+        if (antwoord.trim().toLowerCase() === correct) {
+            toonKortFeedback("Goed!", "#2b7a4b");
+            gaNaarVolgendeOpgave();
+        } else {
+            state.foutenGemaakt++;
+            toonKortFeedback("Fout. Probeer opnieuw.", "#c4450c");
+            state.fase = "wachtOpToets";
+            state.inputValue = "";
+            cleanupFlitsListeners();
+            render();
+        }
+    }
+
+    function createLumoMascotte() {
+        let lumoDiv = document.querySelector('.lumo-mascotte');
+        if(lumoDiv) return;
+        lumoDiv = document.createElement('div');
+        lumoDiv.className = 'lumo-mascotte';
+        lumoDiv.innerHTML = `<img src="Lumo.png" alt="Lumo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23f5e6d3%22/%3E%3Ccircle cx=%2235%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3Ccircle cx=%2265%22 cy=%2240%22 r=%225%22 fill=%22%23333%22/%3E%3Cpath d=%22M40 65 Q50 75 60 65%22 stroke=%22%23333%22 stroke-width=%223%22 fill=%22none%22/%3E%3C/svg%3E'">`;
+        document.body.appendChild(lumoDiv);
+    }
+
+    function renderStatsTop() {
+        let statsDiv = document.querySelector('.stats-top');
+        if (!statsDiv) {
+            statsDiv = document.createElement('div');
+            statsDiv.className = 'stats-top';
+            document.body.appendChild(statsDiv);
+        }
+        const boostTekst = isBoostActief() ? "Boost actief" : "";
+        statsDiv.innerHTML = `<div>Punten: <span>${state.totaalPunten}</span></div><div>Lessen: <span>${state.lessenVandaag}</span></div>${boostTekst ? `<div>⚡ ${boostTekst}</div>` : ''}`;
+    }
+
+    function renderStartScherm() {
+        renderStatsTop();
+        const rootEl = document.getElementById('appRoot');
+        if (!rootEl) return;
+        const huidigDoel = (geselecteerdDoelIndex >= 0 && spellingsDoelen[geselecteerdDoelIndex]) ? spellingsDoelen[geselecteerdDoelIndex].naam : "Geen doel";
+        const woordAantal = woordenLijst.length;
+        let doelenHtml = '<div class="doelen-grid">';
+        for (let i = 0; i < spellingsDoelen.length; i++) {
+            const activeClass = (i === geselecteerdDoelIndex) ? 'style="background:#2b7a4b; box-shadow:0 5px 0 #1a4f32;"' : '';
+            doelenHtml += `<button class="doel-btn" data-doelindex="${i}" ${activeClass}>${spellingsDoelen[i].naam}</button>`;
+        }
+        doelenHtml += '</div>';
+        rootEl.innerHTML = `
+            <div class="content">
+                <h1 style="font-size: 3.8rem; margin-bottom: 0.8rem; background: linear-gradient(135deg,#1f6e8c,#0a4057); background-clip:text; -webkit-background-clip:text; color:transparent;">FLITSMEESTER</h1>
+                <div class="doel-info">📖 Huidig doel: ${huidigDoel} (${woordAantal} woorden)</div>
+                ${doelenHtml}
+                <button class="start-btn" id="startLesKnop">Laten we beginnen!</button>
+            </div>
+        `;
+        for (let i = 0; i < spellingsDoelen.length; i++) {
+            const btn = document.querySelector(`.doel-btn[data-doelindex="${i}"]`);
+            if (btn) btn.addEventListener('click', (e) => { e.preventDefault(); selecteerDoel(i); });
+        }
+        const startBtn = document.getElementById('startLesKnop');
+        if(startBtn) startBtn.onclick = () => startNieuweLes();
+        createLumoMascotte();
+        let cancelDiv = document.querySelector('.cancel-btn');
+        if(!cancelDiv) {
+            cancelDiv = document.createElement('div');
+            cancelDiv.className = 'cancel-btn';
+            cancelDiv.innerHTML = '✕';
+            cancelDiv.title = "Les annuleren";
+            document.body.appendChild(cancelDiv);
+            cancelDiv.addEventListener('click', () => annuleerLes());
+        }
+    }
+
+    function render() {
+        renderStatsTop();
+        const rootEl = document.getElementById('appRoot');
+        if (!rootEl) return;
+        if (!state.actief) { renderStartScherm(); return; }
+        
+        if (state.fase === "wachtOpToets") {
+            rootEl.innerHTML = `<div class="content"><div class="word-stage"><div class="woord-anim" id="woordAnimElement">${state.huidigWoord}</div></div><div class="les-hint">Druk op een toets of tik op het woord</div></div>`;
+            const woordDiv = document.getElementById('woordAnimElement');
+            const verbergActie = () => { if (state.fase === "wachtOpToets" && state.actief) { state.fase = "typeModus"; state.inputValue = ""; cleanupFlitsListeners(); render(); } };
+            if (woordDiv) { woordDiv.addEventListener('click', verbergActie); state.clickFlitsHandler = verbergActie; }
+            const keyAny = (e) => { if (state.fase === "wachtOpToets" && state.actief) { e.preventDefault(); verbergActie(); } };
+            document.addEventListener('keydown', keyAny); state.keyHandlerGlobal = keyAny;
+            return;
+        }
+        if (state.fase === "typeModus") {
+            rootEl.innerHTML = `<div class="content"><div class="word-stage"><div class="woord-anim" id="woordAnimElement">???</div></div><div class="type-area"><input type="text" id="flitsInput" placeholder="Typ het woord..." autocomplete="off" value="${escapeHtml(state.inputValue)}"></div><div class="les-hint">Druk op Enter</div></div>`;
+            const inputVeld = document.getElementById('flitsInput');
+            if (inputVeld) {
+                inputVeld.focus();
+                inputVeld.addEventListener('input', (e) => { state.inputValue = e.target.value; });
+                inputVeld.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); beoordeelAntwoord(state.inputValue.trim().toLowerCase()); } });
+                inputVeld.value = state.inputValue;
+            }
+            return;
+        }
+        if (state.fase === "lesAfgelopen") { state.fase = "complimentScherm"; render(); return; }
+        if (state.fase === "complimentScherm") {
+            rootEl.innerHTML = `<div class="content"><div class="compliment-card">${state.complimentTekst}</div><div style="font-size: 2rem; font-weight: bold;">+${state.nettoPunten} punten</div><button id="doorgaanCompBtn" style="background:#3b6e4a;">Doorgaan</button></div>`;
+            const btn = document.getElementById('doorgaanCompBtn');
+            const doorgaan = () => { state.fase = "puntenScherm"; render(); };
+            if(btn) btn.onclick = doorgaan;
+            const enterComp = (e) => { if(e.key === 'Enter') { document.removeEventListener('keydown', enterComp); doorgaan(); } };
+            document.addEventListener('keydown', enterComp);
+            return;
+        }
+        if (state.fase === "puntenScherm") {
+            rootEl.innerHTML = `<div class="content"><div style="font-size: 2.2rem;">${state.nettoPunten} punten verdiend</div><div style="margin: 25px 0; font-size: 1.3rem;">Je hebt er weer ${state.nettoPunten} punten bij!</div><button id="doorgaanPuntenBtn" class="start-btn">Doorgaan</button></div>`;
+            const btn = document.getElementById('doorgaanPuntenBtn');
+            const next = () => { state.fase = "lesTellerScherm"; render(); };
+            if(btn) btn.onclick = next;
+            document.addEventListener('keydown', function onEnter(e){ if(e.key === 'Enter'){ document.removeEventListener('keydown', onEnter); next(); } }, { once: true });
+            return;
+        }
+        if (state.fase === "lesTellerScherm") {
+            const aantal = state.lessenVandaag;
+            const boostNu = (aantal === 5 && !isBoostActief());
+            rootEl.innerHTML = `<div class="content"><div style="font-size: 1.8rem; font-weight:bold;">Dit is je ${aantal}e les vandaag.</div>${boostNu ? '<div style="background:#facc15; border-radius: 60px; padding: 18px; margin: 20px; font-weight:bold;">Puntenboost voor 10 minuten!</div>' : ''}<button id="terugStart" class="start-btn">Start</button></div>`;
+            const terug = document.getElementById('terugStart');
+            const finish = () => { if(boostNu) startBoost(10); state.actief = false; if(state.warningInterval) clearInterval(state.warningInterval); cleanupFlitsListeners(); if(state.feedbackTimer) clearTimeout(state.feedbackTimer); renderStartScherm(); };
+            if(terug) terug.onclick = finish;
+            document.addEventListener('keydown', function onEnter(e){ if(e.key === 'Enter'){ document.removeEventListener('keydown', onEnter); finish(); } }, { once: true });
+            return;
+        }
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    async function init() {
+        laadTotaalPunten(); laadDagTeller(); hervatBoost();
+        await laadSpellingsDoelen();
+        if (spellingsDoelen.length > 0 && geselecteerdDoelIndex === -1) { geselecteerdDoelIndex = 0; woordenLijst = spellingsDoelen[0].woorden; }
+        renderStartScherm();
+        setInterval(() => renderStatsTop(), 1000);
+    }
+    init();
+</script>
+</body>
+</html>
